@@ -13,7 +13,7 @@ Web dashboard to receive and display LinSpec kernel hardening scan reports.
 
 ## Overview
 
-Collects scan reports via REST API, stores them in SQLite, and displays aggregate statistics and per-scan details.
+Collects scan reports via REST API, stores them in SQLite, and displays aggregate statistics and per-scan details. Natively compatible with LinSpec JSON output via `--webhook`.
 
 ## Quick Start
 
@@ -32,7 +32,10 @@ Visit `/admin/setup` to create the first API key for submitting scans.
 
 ### Submit a scan report
 
+Accepts both **LinSpec-native** format (lowercase `result`) and **legacy** format (uppercase `status`). Examples:
+
 ```bash
+# LinSpec-native format (from --webhook)
 curl -X POST http://localhost:5000/api/scan \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your-key>" \
@@ -41,8 +44,22 @@ curl -X POST http://localhost:5000/api/scan \
     "kernel": "6.8.0",
     "os": "Linux",
     "checks": [
+      {"id": 1, "name": "aslr", "result": "pass", "category": "memory",
+       "current": 2, "expected": 2, "message": ""},
+      {"id": 2, "name": "kptr_restrict", "result": "vuln", "category": "kernel",
+       "current": 0, "expected": 2, "message": "kptr_restrict=0"}
+    ]
+  }'
+
+# Legacy format
+curl -X POST http://localhost:5000/api/scan \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your-key>" \
+  -d '{
+    "hostname": "server01",
+    "checks": [
       {"check": "aslr", "category": "memory", "status": "PASS", "message": ""},
-      {"check": "kptr_restrict", "category": "kernel", "status": "VULN", "message": "kptr_restrict=0"}
+      {"check": "kptr_restrict", "category": "kernel", "status": "VULN", "message": "bad"}
     ]
   }'
 ```
@@ -62,6 +79,13 @@ GET /api/scan/<id>/raw
 | `LINSPEC_DB` | `data.db` | SQLite database path |
 | `LINSPEC_DEBUG` | `false` | Enable Flask debug mode |
 | `LINSPEC_RATE_LIMIT` | `60` | Max requests per minute per IP |
+
+## Security Notes
+
+- **API key** is read from the `X-API-Key` header only (query string `?key=` not accepted)
+- **CORS** is enabled globally via `flask-cors`
+- **Rate limiting** is in-memory per-worker (not shared across gunicorn workers)
+- Always use a reverse proxy (nginx/caddy) for TLS termination
 
 ## Production
 
