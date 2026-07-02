@@ -1,9 +1,10 @@
-import sqlite3, json, os, uuid, hashlib, time
-from datetime import datetime, timezone
+import sqlite3, json, os, uuid, time
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = os.environ.get('SECRET_KEY', uuid.uuid4().hex)
 DB = os.environ.get('LINSPEC_DB', os.path.join(os.path.dirname(__file__), 'data.db'))
 DEBUG = os.environ.get('LINSPEC_DEBUG', '').lower() in ('1', 'true', 'yes')
@@ -69,12 +70,10 @@ def init_db():
         );
         """)
 
-init_db()
-
 def require_api_key(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        key = request.headers.get('X-API-Key') or request.args.get('key')
+        key = request.headers.get('X-API-Key')
         if not key:
             return jsonify({'error': 'API key required'}), 401
         with get_db() as conn:
@@ -84,7 +83,6 @@ def require_api_key(f):
         return f(*args, **kwargs)
     return decorated
 
-# --- Landing page subscription ---
 @app.route('/api/subscribe', methods=['POST'])
 @rate_limit
 def subscribe():
@@ -101,9 +99,8 @@ def subscribe():
 
 @app.route('/obrigado')
 def thank_you():
-    return redirect('/obrigado.html')
+    return "<h1>Obrigado!</h1><p>Inscricao confirmada.</p><p><a href='/'>Voltar ao dashboard</a></p>"
 
-# --- API: receive scan report ---
 @app.route('/api/scan', methods=['POST'])
 @rate_limit
 @require_api_key
@@ -118,9 +115,27 @@ def receive_scan():
     os_ = data.get('os', '')
 
     total = len(checks)
-    passed = sum(1 for c in checks if c.get('status') == 'PASS')
-    warned = sum(1 for c in checks if c.get('status') == 'WARN')
-    failed = sum(1 for c in checks if c.get('status') == 'VULN')
+    passed = 0
+    warned = 0
+    failed = 0
+
+    status_map = {'pass': 'PASS', 'warn': 'WARN', 'vuln': 'VULN', 'skip': 'SKIP', 'error': 'ERROR'}
+
+    check_rows = []
+    for c in checks:
+        raw_status = c.get('status', '')
+        if raw_status:
+            status = raw_status.upper()
+        else:
+            status = status_map.get((c.get('result') or '').lower(), 'UNKNOWN')
+        check_name = c.get('check') or c.get('name', 'unknown')
+        category = c.get('category', 'general')
+        message = c.get('message') or c.get('detail', '')
+        if status == 'PASS': passed += 1
+        elif status == 'WARN': warned += 1
+        elif status == 'VULN': failed += 1
+        check_rows.append((check_name, category, status, message))
+
     score = round((passed / total * 100) if total else 0, 1)
 
     with get_db() as conn:
@@ -130,17 +145,14 @@ def receive_scan():
         """, (hostname, kernel, os_, total, passed, warned, failed, score, json.dumps(data)))
         scan_id = cur.lastrowid
 
-        for c in checks:
+        for check_name, category, status, message in check_rows:
             conn.execute("""
                 INSERT INTO scan_checks (scan_id, check_name, category, status, message)
                 VALUES (?, ?, ?, ?, ?)
-            """, (scan_id, c.get('check', c.get('name', 'unknown')),
-                  c.get('category', 'general'), c.get('status', 'UNKNOWN'),
-                  c.get('message', '')))
+            """, (scan_id, check_name, category, status, message))
 
     return jsonify({'scan_id': scan_id, 'score': score, 'status': 'ok'})
 
-# --- Web Dashboard ---
 @app.route('/')
 def dashboard():
     with get_db() as conn:
@@ -181,7 +193,6 @@ def raw_scan(scan_id):
         return jsonify({'error': 'not found'}), 404
     return jsonify(json.loads(row['raw_json']))
 
-# --- Admin: setup first API key ---
 @app.route('/admin/setup')
 def admin_setup():
     with get_db() as conn:
@@ -193,5 +204,6 @@ def admin_setup():
         return "API Key ja existe. Crie manualmente no banco se necessario."
 
 if __name__ == '__main__':
+    init_db()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=DEBUG)
