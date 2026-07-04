@@ -11,6 +11,12 @@ Web dashboard to receive and display LinSpec kernel hardening scan reports.
 [![Tested-on](https://img.shields.io/badge/Tested%20on-Arch%20Linux-1793D1?style=flat-square&logo=arch-linux)](https://security.archlinux.org/)
 [![Domain](https://img.shields.io/badge/Domain-Security%20Dashboard-8A2BE2?style=flat-square)](docs/ARCHITECTURE.md)
 
+## Etymology
+
+**LinDash** = **Lin**Spec + **Dash**board.
+
+A web dashboard purpose-built to receive, store, and display LinSpec kernel hardening scan reports — extending LinSpec from a CLI tool into a centralized security visibility layer.
+
 ## Overview
 
 Collects scan reports via REST API, stores them in SQLite, and displays aggregate statistics and per-scan details. Natively compatible with LinSpec JSON output via `--webhook`.
