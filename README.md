@@ -93,6 +93,8 @@ GET /api/scan/<id>/raw
 - **Rate limiting** is in-memory per-worker (not shared across gunicorn workers)
 - Always use a reverse proxy (nginx/caddy) for TLS termination
 
+[![Docs-Security](https://img.shields.io/badge/Security-Policy-CC0000?style=flat-square&logo=opensourceinitiative&logoColor=white)](SECURITY.md)
+
 ## Production
 
 Use the bundled `start.sh` with gunicorn:
@@ -109,4 +111,10 @@ Use the bundled `start.sh` with gunicorn:
 pip install pytest
 python -m pytest tests/
 ```
+
+## Documentation
+
+[![Docs-Architecture](https://img.shields.io/badge/Architecture-Design-00599C?style=flat-square&logo=linux&logoColor=white)](docs/ARCHITECTURE.md)
+[![Docs-Usage](https://img.shields.io/badge/Usage-Guide-228B22?style=flat-square&logo=readthedocs&logoColor=white)](docs/USAGE_GUIDE.md)
+[![Docs-Deployment](https://img.shields.io/badge/Deployment-Guide-8A2BE2?style=flat-square)](docs/DEPLOYMENT_GUIDE.md)
 
