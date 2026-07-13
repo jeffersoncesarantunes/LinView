@@ -1,4 +1,4 @@
-# LinSpec Dashboard
+# LinView
 
 Web dashboard to receive and display LinSpec kernel hardening scan reports.
 
@@ -7,13 +7,13 @@ Web dashboard to receive and display LinSpec kernel hardening scan reports.
 [![Framework-Flask](https://img.shields.io/badge/Framework-Flask-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
 [![License-MIT](https://img.shields.io/badge/License-MIT-EE0000?style=flat-square&logo=license&logoColor=white)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active-00A86B?style=flat-square)](#-roadmap)
-[![CI](https://img.shields.io/github/actions/workflow/status/jeffersoncesarantunes/LinDash/ci.yml?style=flat-square&logo=github&label=CI)](https://github.com/jeffersoncesarantunes/LinDash/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/jeffersoncesarantunes/LinView/ci.yml?style=flat-square&logo=github&label=CI)](https://github.com/jeffersoncesarantunes/LinView/actions/workflows/ci.yml)
 [![Tested-on](https://img.shields.io/badge/Tested%20on-Arch%20Linux-1793D1?style=flat-square&logo=arch-linux)](https://security.archlinux.org/)
 [![Domain](https://img.shields.io/badge/Domain-Security%20Dashboard-8A2BE2?style=flat-square)](docs/ARCHITECTURE.md)
 
 ## Etymology
 
-**LinDash** = **Lin**Spec + **Dash**board.
+**LinView** = **Lin**Spec + **View**.
 
 A web dashboard purpose-built to receive, store, and display LinSpec kernel hardening scan reports — extending LinSpec from a CLI tool into a centralized security visibility layer.
 
@@ -82,9 +82,9 @@ GET /api/scan/<id>/raw
 |---|---|---|
 | `PORT` | `5000` | HTTP port |
 | `SECRET_KEY` | auto | Flask session secret |
-| `LINSPEC_DB` | `data.db` | SQLite database path |
-| `LINSPEC_DEBUG` | `false` | Enable Flask debug mode |
-| `LINSPEC_RATE_LIMIT` | `60` | Max requests per minute per IP |
+| `LINVIEW_DB` | `data.db` | SQLite database path |
+| `LINVIEW_DEBUG` | `false` | Enable Flask debug mode |
+| `LINVIEW_RATE_LIMIT` | `60` | Max requests per minute per IP |
 
 ## Security Notes
 
@@ -103,7 +103,7 @@ Use the bundled `start.sh` with gunicorn:
 ./start.sh
 ```
 
-**Never** run with `LINSPEC_DEBUG=true` in production.
+**Never** run with `LINVIEW_DEBUG=true` in production.
 
 ## Tests
 

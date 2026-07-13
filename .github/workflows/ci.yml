@@ -1,4 +1,4 @@
-name: LinDash CI
+name: LinView CI
 
 on:
   push:

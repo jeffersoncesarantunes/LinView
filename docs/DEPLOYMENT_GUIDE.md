@@ -1,4 +1,4 @@
-# LinSpec Dashboard — Deployment Guide
+# LinView — Deployment Guide
 
 ## Architecture
 
@@ -16,7 +16,7 @@ Gunicorn (4 workers)
     └── SQLite (data.db)
 ```
 
-The dashboard is designed to run on a separate server from the audit targets. All target machines submit scans to this central dashboard via REST API.
+LinView is designed to run on a separate server from the audit targets. All target machines submit scans to this central dashboard via REST API.
 
 ## Production Setup
 
@@ -33,9 +33,9 @@ pip install -r requirements.txt
 ```bash
 export PORT=5000
 export SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
-export LINSPEC_DB=/var/lib/lindash/data.db
-export LINSPEC_DEBUG=false
-export LINSPEC_RATE_LIMIT=60
+export LINVIEW_DB=/var/lib/linview/data.db
+export LINVIEW_DEBUG=false
+export LINVIEW_RATE_LIMIT=60
 ```
 
 ### 3. Run with Gunicorn
@@ -82,20 +82,20 @@ dash.example.com {
 
 ### 5. Run as a System Service
 
-Create `/etc/systemd/system/lindash.service`:
+Create `/etc/systemd/system/linview.service`:
 
 ```ini
 [Unit]
-Description=LinSpec Dashboard
+Description=LinView
 After=network.target
 
 [Service]
 Type=simple
-User=lindash
-WorkingDirectory=/opt/lindash
+User=linview
+WorkingDirectory=/opt/linview
 Environment=PORT=5000
-Environment=LINSPEC_DB=/var/lib/lindash/data.db
-ExecStart=/opt/lindash/venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 app:app
+Environment=LINVIEW_DB=/var/lib/linview/data.db
+ExecStart=/opt/linview/venv/bin/gunicorn -w 4 -b 127.0.0.1:5000 app:app
 Restart=always
 
 [Install]
@@ -104,7 +104,7 @@ WantedBy=multi-user.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now lindash
+sudo systemctl enable --now linview
 ```
 
 ## Security Hardening
@@ -114,15 +114,15 @@ sudo systemctl enable --now lindash
 Store the SQLite database outside the web root:
 
 ```bash
-export LINSPEC_DB=/var/lib/lindash/data.db
+export LINVIEW_DB=/var/lib/linview/data.db
 ```
 
 Ensure the directory has restricted permissions:
 
 ```bash
-sudo mkdir -p /var/lib/lindash
-sudo chown lindash:lindash /var/lib/lindash
-sudo chmod 750 /var/lib/lindash
+sudo mkdir -p /var/lib/linview
+sudo chown linview:linview /var/lib/linview
+sudo chmod 750 /var/lib/linview
 ```
 
 ### API Key Rotation
@@ -130,8 +130,8 @@ sudo chmod 750 /var/lib/lindash
 Keys are stored in the `api_keys` table. Rotate periodically:
 
 ```bash
-sqlite3 /var/lib/lindash/data.db \
-  "DELETE FROM api_keys; INSERT INTO api_keys (key, label) VALUES ('linspec-<new-token>', 'rotated');"
+sqlite3 /var/lib/linview/data.db \
+  "DELETE FROM api_keys; INSERT INTO api_keys (key, label) VALUES ('linview-<new-token>', 'rotated');"
 ```
 
 ### Rate Limiting
@@ -139,7 +139,7 @@ sqlite3 /var/lib/lindash/data.db \
 Adjust the per-IP rate limit based on your environment size:
 
 ```bash
-export LINSPEC_RATE_LIMIT=120   # Larger environments
+export LINVIEW_RATE_LIMIT=120
 ```
 
 ### Firewall
@@ -156,12 +156,12 @@ iptables -A INPUT -p tcp --dport 5000 -j DROP
 The SQLite database is the only persistent state. Back it up regularly:
 
 ```bash
-sqlite3 /var/lib/lindash/data.db ".backup /backup/lindash-$(date +%F).db"
+sqlite3 /var/lib/linview/data.db ".backup /backup/linview-$(date +%F).db"
 ```
 
 ## Monitoring
 
-LinDash exposes no health endpoint by default. Use a simple TCP check:
+LinView exposes no health endpoint by default. Use a simple TCP check:
 
 ```bash
 curl -f http://127.0.0.1:5000/ || alert

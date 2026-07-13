@@ -1,8 +1,8 @@
-# LinSpec Dashboard — Architecture
+# LinView — Architecture
 
 ## Overview
 
-The LinSpec Dashboard is a lightweight Flask web application that receives kernel hardening scan reports from [LinSpec](https://github.com/jeffersoncesarantunes/LinSpec) via REST API and displays them in a web interface.
+LinView is a lightweight Flask web application that receives kernel hardening scan reports from [LinSpec](https://github.com/jeffersoncesarantunes/LinSpec) via REST API and displays them in a web interface.
 
 ## Role in the SYNTROPY Ecosystem
 
@@ -18,13 +18,13 @@ The LinSpec Dashboard is a lightweight Flask web application that receives kerne
 │       └────────────────────────────┐                │
 │                                    ▼                │
 │  ┌──────────────────────────────┐                   │
-│  │    LinSpec Dashboard         │                   │
-│  │  (visualization & history)   │                   │
+ │  │    LinView                    │                   │
+ │  │  (visualization & history)   │                   │
 │  └──────────────────────────────┘                   │
 └─────────────────────────────────────────────────────┘
 ```
 
-LinSpec runs on the target machine and outputs a `report.json`. The dashboard receives this report, stores it in SQLite, and provides:
+LinSpec runs on the target machine and outputs a `report.json`. LinView receives this report, stores it in SQLite, and provides:
 
 - **Aggregate view**: average score, total PASS/WARN/VULN across all scans
 - **Per-scan detail**: individual check results per host
@@ -57,11 +57,11 @@ Flask app (dashboard server)
 
 ## Security
 
-- API key authentication on `/api/scan` and `/api/subscribe`
-- Rate limiting (60 req/min per IP, configurable via `LINSPEC_RATE_LIMIT`)
+- API key authentication on `/api/scan` (subscribe is rate-limited only)
+- Rate limiting (60 req/min per IP, configurable via `LINVIEW_RATE_LIMIT`)
 - SQL injection prevented via parameterized queries
-- Debug mode disabled by default (`LINSPEC_DEBUG=false`)
-- DB path configurable via `LINSPEC_DB` environment variable
+- Debug mode disabled by default (`LINVIEW_DEBUG=false`)
+- DB path configurable via `LINVIEW_DB` environment variable
 
 ## Deployment
 

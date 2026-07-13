@@ -6,9 +6,9 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.environ.get('SECRET_KEY', uuid.uuid4().hex)
-DB = os.environ.get('LINSPEC_DB', os.path.join(os.path.dirname(__file__), 'data.db'))
-DEBUG = os.environ.get('LINSPEC_DEBUG', '').lower() in ('1', 'true', 'yes')
-RATE_LIMIT = int(os.environ.get('LINSPEC_RATE_LIMIT', '60'))
+DB = os.environ.get('LINVIEW_DB', os.path.join(os.path.dirname(__file__), 'data.db'))
+DEBUG = os.environ.get('LINVIEW_DEBUG', '').lower() in ('1', 'true', 'yes')
+RATE_LIMIT = int(os.environ.get('LINVIEW_RATE_LIMIT', '60'))
 
 _request_times = {}
 
@@ -198,7 +198,7 @@ def admin_setup():
     with get_db() as conn:
         existing = conn.execute("SELECT COUNT(*) as cnt FROM api_keys").fetchone()['cnt']
         if existing == 0:
-            key = 'linspec-' + uuid.uuid4().hex[:16]
+            key = 'linview-' + uuid.uuid4().hex[:16]
             conn.execute("INSERT INTO api_keys (key, label) VALUES (?, ?)", (key, 'auto-generated'))
             return f"API Key gerada: <code>{key}</code><br> Use no header X-API-Key ao enviar scans."
         return "API Key ja existe. Crie manualmente no banco se necessario."

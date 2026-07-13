@@ -1,8 +1,8 @@
-# LinSpec Dashboard — Usage Guide
+# LinView — Usage Guide
 
 ## Overview
 
-LinDash is a web dashboard that receives kernel hardening scan reports from [LinSpec](https://github.com/jeffersoncesarantunes/LinSpec) and provides a centralized view of security posture across all your hosts.
+LinView is a web dashboard that receives kernel hardening scan reports from [LinSpec](https://github.com/jeffersoncesarantunes/LinSpec) and provides a centralized view of security posture across all your hosts.
 
 ## Quick Start
 
@@ -26,7 +26,7 @@ The key is a one-time generated token. Store it securely — it will be used to 
 On any target machine with LinSpec installed:
 
 ```bash
-linspec --webhook http://<dashboard-ip>:5000/api/scan --api-key <your-key>
+sudo LINSPEC_API_KEY=<your-key> linspec --webhook http://<dashboard-ip>:5000/api/scan
 ```
 
 You can also submit manually via curl:
@@ -97,13 +97,13 @@ Visit `/admin/setup` on a fresh installation to auto-generate the first key.
 Keys are stored in the `api_keys` table of the SQLite database. To add or revoke keys manually:
 
 ```bash
-sqlite3 data.db "INSERT INTO api_keys (key, label) VALUES ('linspec-mykey', 'workstation-prod');"
-sqlite3 data.db "DELETE FROM api_keys WHERE key='linspec-mykey';"
+sqlite3 data.db "INSERT INTO api_keys (key, label) VALUES ('linview-mykey', 'workstation-prod');"
+sqlite3 data.db "DELETE FROM api_keys WHERE key='linview-mykey';"
 ```
 
 ## Supported Formats
 
-LinDash accepts both **LinSpec-native** and **legacy** formats interchangeably:
+LinView accepts both **LinSpec-native** and **legacy** formats interchangeably:
 
 | Field      | LinSpec-native | Legacy         |
 |------------|---------------|----------------|
@@ -117,6 +117,6 @@ LinDash accepts both **LinSpec-native** and **legacy** formats interchangeably:
 |---|---|---|
 | `PORT` | `5000` | HTTP port |
 | `SECRET_KEY` | auto | Flask session secret |
-| `LINSPEC_DB` | `data.db` | SQLite database path |
-| `LINSPEC_DEBUG` | `false` | Enable Flask debug mode |
-| `LINSPEC_RATE_LIMIT` | `60` | Max requests per minute per IP |
+| `LINVIEW_DB` | `data.db` | SQLite database path |
+| `LINVIEW_DEBUG` | `false` | Enable Flask debug mode |
+| `LINVIEW_RATE_LIMIT` | `60` | Max requests per minute per IP |

@@ -13,7 +13,6 @@ def client():
     with dash.app.test_client() as c:
         yield c
     os.unlink(db_path)
-    # reset rate limiter
     dash._request_times.clear()
 
 def test_dashboard_returns_200(client):
