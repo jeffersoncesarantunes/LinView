@@ -1,6 +1,6 @@
-import sqlite3, json, os, uuid, time
+import sqlite3, json, os, uuid, time, re, hashlib, hmac
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -9,6 +9,19 @@ app.secret_key = os.environ.get('SECRET_KEY', uuid.uuid4().hex)
 DB = os.environ.get('LINVIEW_DB', os.path.join(os.path.dirname(__file__), 'data.db'))
 DEBUG = os.environ.get('LINVIEW_DEBUG', '').lower() in ('1', 'true', 'yes')
 RATE_LIMIT = int(os.environ.get('LINVIEW_RATE_LIMIT', '60'))
+
+EMAIL_RE = re.compile(r'^[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
+
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = hashlib.sha256(os.urandom(32)).hexdigest()
+    return session['_csrf_token']
+
+def validate_csrf_token(token):
+    csrf = session.get('_csrf_token')
+    if not csrf or not token:
+        return False
+    return hmac.compare_digest(str(csrf), str(token))
 
 _request_times = {}
 
@@ -86,10 +99,15 @@ def require_api_key(f):
 @app.route('/api/subscribe', methods=['POST'])
 @rate_limit
 def subscribe():
+    csrf_token = request.form.get('_csrf_token', '')
+    if not validate_csrf_token(csrf_token):
+        return redirect(url_for('thank_you', error='CSRF invalido'))
     name = request.form.get('name', '').strip()
     email = request.form.get('email', '').strip().lower()
-    if not name or not email or '@' not in email:
+    if not name or not email or not EMAIL_RE.match(email):
         return redirect(url_for('thank_you', error='Dados invalidos'))
+    if len(name) > 256 or len(email) > 320:
+        return redirect(url_for('thank_you', error='Dados muito longos'))
     try:
         with get_db() as conn:
             conn.execute("INSERT INTO subscribers (name, email) VALUES (?, ?)", (name, email))
@@ -206,4 +224,4 @@ def admin_setup():
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=DEBUG)
+    app.run(host='0.0.0.0', port=port, debug=bool(DEBUG))
